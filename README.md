@@ -5,11 +5,14 @@
 Fork
 --------------
 
-This has been forked for (currently) two main reasons:
+This has been forked for (currently) three reasons:
 
 1. While most targets (i.e., GPUs) will take, at max, single float precision, for comp. geometry purposes it's better to use double (or arbitrary) precision. It's probably best to make this library generic, but since the original source has to be changed anyway I'm just chaging `Scalar` to `Double`.
 
 2. Issues with `Hashable` conformance. The use of `&+` overlflow-safe addition prevents exceptions but since addition is commutative we run into collisions with very common vector values, e.g., (+1,-1) and (-1,+1). It's better to use a hash function (DJB below) for this.
+ 
+3. The `Scalar` epslion value of 1e-4 is good for checking if, e.g., two vectors are *visually* equal -- occupy the same pixel -- given the low resolution of screens. This is a special case, however, and should not be used for approximate scalar equality in general.
+ 
 
 ```Swift
 //: Playground - noun: a place where people can play
