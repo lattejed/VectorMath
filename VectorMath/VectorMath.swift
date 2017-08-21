@@ -93,6 +93,12 @@ public struct Quaternion {
     public var w: Scalar
 }
 
+fileprivate extension Array where Element == Int {
+    func hashReduce() -> Int {
+        return self.reduce(5381) { ($0 << 5) &+ $0 &+ Int($1) } // DJB Hash
+    }
+}
+
 // MARK: Scalar
 
 public extension Scalar {
@@ -116,7 +122,7 @@ public extension Scalar {
 
 extension Vector2: Hashable {
     public var hashValue: Int {
-        return x.hashValue &+ y.hashValue
+        return [x.hashValue, y.hashValue].hashReduce()
     }
 }
 
@@ -241,7 +247,7 @@ public extension Vector2 {
 
 extension Vector3: Hashable {
     public var hashValue: Int {
-        return x.hashValue &+ y.hashValue &+ z.hashValue
+        return [x.hashValue, y.hashValue, z.hashValue].hashReduce()
     }
 }
 
@@ -390,7 +396,7 @@ public extension Vector3 {
 
 extension Vector4: Hashable {
     public var hashValue: Int {
-        return x.hashValue &+ y.hashValue &+ z.hashValue &+ w.hashValue
+        return [x.hashValue, y.hashValue, z.hashValue, w.hashValue].hashReduce()
     }
 }
 
@@ -545,10 +551,9 @@ public extension Vector4 {
 
 extension Matrix3: Hashable {
     public var hashValue: Int {
-        var hash = m11.hashValue &+ m12.hashValue &+ m13.hashValue
-        hash = hash &+ m21.hashValue &+ m22.hashValue &+ m23.hashValue
-        hash = hash &+ m31.hashValue &+ m32.hashValue &+ m33.hashValue
-        return hash
+        return [m11.hashValue, m12.hashValue, m13.hashValue,
+                m21.hashValue, m22.hashValue, m23.hashValue,
+                m31.hashValue, m32.hashValue, m33.hashValue].hashReduce()
     }
 }
 
@@ -711,11 +716,10 @@ public extension Matrix3 {
 
 extension Matrix4: Hashable {
     public var hashValue: Int {
-        var hash = m11.hashValue &+ m12.hashValue &+ m13.hashValue &+ m14.hashValue
-        hash = hash &+ m21.hashValue &+ m22.hashValue &+ m23.hashValue &+ m24.hashValue
-        hash = hash &+ m31.hashValue &+ m32.hashValue &+ m33.hashValue &+ m34.hashValue
-        hash = hash &+ m41.hashValue &+ m42.hashValue &+ m43.hashValue &+ m44.hashValue
-        return hash
+        return [m11.hashValue, m12.hashValue, m13.hashValue, m14.hashValue,
+                m21.hashValue, m22.hashValue, m23.hashValue, m24.hashValue,
+                m31.hashValue, m32.hashValue, m33.hashValue, m34.hashValue,
+                m41.hashValue, m42.hashValue, m43.hashValue, m44.hashValue].hashReduce()
     }
 }
 
@@ -1052,7 +1056,7 @@ public extension Matrix4 {
 
 extension Quaternion: Hashable {
     public var hashValue: Int {
-        return x.hashValue &+ y.hashValue &+ z.hashValue &+ w.hashValue
+        return [x.hashValue, y.hashValue, z.hashValue, w.hashValue].hashReduce()
     }
 }
 
