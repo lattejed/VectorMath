@@ -104,7 +104,7 @@ public extension Scalar {
     public static let epsilon: Scalar = Double.ulpOfOne
     
     public static func ~=(lhs: Scalar, rhs: Scalar) -> Bool {
-        return Swift.abs(lhs - rhs) < .epsilon
+        return Swift.abs(lhs - rhs) <= .epsilon
     }
 
     fileprivate var sign: Scalar {
