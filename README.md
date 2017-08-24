@@ -5,45 +5,9 @@
 Fork
 --------------
 
-This has been forked for (currently) three reasons:
 
-1. While most targets (i.e., GPUs) will take, at max, single float precision, for comp. geometry purposes it's better to use double (or arbitrary) precision. It's probably best to make this library generic, but since the original source has to be changed anyway I'm just changing `Scalar` to `Double`.
-
-2. Issues with `Hashable` conformance. The use of `&+` overlflow-safe addition prevents exceptions but since addition is commutative we run into collisions with very common vector values, e.g., (+1,-1) and (-1,+1). It's better to use a hash function (DJB below) for this.
+An explantion of this fork has moved to the comments in `VectorMath.swift`.
  
-3. The `Scalar` epslion value of 1e-4 is good for checking if, e.g., two vectors are *visually* equal -- occupy the same pixel -- given the low resolution of screens. This is a special case, however, and should not be used for approximate scalar equality in general.
- 
-
-```Swift
-//: Playground - noun: a place where people can play
-
-import Cocoa
-
-let max = Int.max
-
-let h1 = (-1.hashValue &+ +1.hashValue).hashValue
-let h2 = (+1.hashValue &+ -1.hashValue).hashValue
-
-let h3 = [Int(-1), Int(1)].reduce(5381) {
-    ($0 << 5) &+ $0 &+ Int($1)
-}
-
-let h4 = [Int(1), Int(-1)].reduce(5381) {
-    ($0 << 5) &+ $0 &+ Int($1)
-}
-
-let h5 = [max, max, 1].reduce(5381) {
-    ($0 << 5) &+ $0 &+ Int($1)
-}
-let h6 = [max, 1, max].reduce(5381) {
-    ($0 << 5) &+ $0 &+ Int($1)
-}
-
-print(h1 == h2) // true, bad
-print(h3 == h4) // false, good
-print(h5 == h6) // false, good
-```
-
 
 Purpose
 --------------

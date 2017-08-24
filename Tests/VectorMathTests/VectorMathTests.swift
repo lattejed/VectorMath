@@ -9,6 +9,10 @@
 import QuartzCore
 import XCTest
 
+fileprivate func ~=(lhs: Scalar, rhs: Scalar) -> Bool {
+    return Swift.abs(lhs - rhs) <= .epsilon
+}
+
 class Vector2Tests: XCTestCase {
     
     func testRotatedBy() {

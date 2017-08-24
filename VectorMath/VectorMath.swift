@@ -31,6 +31,28 @@
 //  3. This notice may not be removed or altered from any source distribution.
 //
 
+/*
+ 
+ Fork
+ 
+ This has been forked for a few reasons:
+ 
+ While most targets (i.e., GPUs) will take, at max, single float precision, for comp. geometry purposes it's better to use double (or arbitrary) precision.
+ 
+ Issues with Hashable conformance. The use of &+ overlflow-safe addition prevents exceptions but since addition is commutative we run into collisions with very common vector values, e.g., (+1,-1) and (-1,+1). It's better to use a hash function (DJB below) for this.
+ 
+ Generating hash values for Scalars that can be compared in a way that's equivalent to using an epsilon value. In this case we take a standardized representation of the floating point value (a bitfield) and mask the least significant byte. This is conceptually equivalent to comparing with an epsilon value -- but does not suffer the big number issues inherent to rounding.
+ 
+ The original Scalar epslion value of 1e-4 is good for checking if, e.g., two vectors are visually equal -- occupy the same pixel -- given the low resolution of screens. This is a special case, however, and should not be used for approximate scalar equality in general.
+ 
+ Removing ~= for Vector and Matrix comparison. The original allowed both == and ~= comparisons on composite values where each type of comparison was performed on the individual Scalar values. Since a standard Scalar comparison of == does not have any use, a == comparison for Vector and Matrix is similarly flawed. 
+ 
+ Removing ~= for Vector and Matrix comparison -- also, in order to use Vector and Matrix in Swift collections, we have to both provide a == operator and a hashValue, providing a ~= operator does not suffice.
+ 
+ We've made the Scalar ~= operator private. One, this operator is already used in Swift for pattern matching and two, we don't want to impose a project-wide epsilon comparison on Double, which Scalar is typealiased to.
+ 
+ */
+
 import Foundation
 
 // MARK: Types
@@ -136,7 +158,7 @@ public extension Scalar {
     public static let radiansPerDegree = pi / 180
     public static let epsilon: Scalar = Double.ulpOfOne
     
-    public static func ~=(lhs: Scalar, rhs: Scalar) -> Bool {
+    fileprivate static func ~=(lhs: Scalar, rhs: Scalar) -> Bool {
         return Swift.abs(lhs - rhs) <= .epsilon
     }
 
@@ -279,12 +301,9 @@ public extension Vector2 {
     }
     
     public static func ==(lhs: Vector2, rhs: Vector2) -> Bool {
-        return lhs.x == rhs.x && lhs.y == rhs.y
-    }
-    
-    public static func ~=(lhs: Vector2, rhs: Vector2) -> Bool {
         return lhs.x ~= rhs.x && lhs.y ~= rhs.y
     }
+    
 }
 
 // MARK: Vector3
@@ -428,12 +447,9 @@ public extension Vector3 {
     }
     
     public static func ==(lhs: Vector3, rhs: Vector3) -> Bool {
-        return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z
-    }
-    
-    public static func ~=(lhs: Vector3, rhs: Vector3) -> Bool {
         return lhs.x ~= rhs.x && lhs.y ~= rhs.y && lhs.z ~= rhs.z
     }
+    
 }
 
 // MARK: Vector4
@@ -583,12 +599,9 @@ public extension Vector4 {
     }
     
     public static func ==(lhs: Vector4, rhs: Vector4) -> Bool {
-        return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w
-    }
-    
-    public static func ~=(lhs: Vector4, rhs: Vector4) -> Bool {
         return lhs.x ~= rhs.x && lhs.y ~= rhs.y && lhs.z ~= rhs.z && lhs.w ~= rhs.w
     }
+    
 }
 
 // MARK: Matrix3
@@ -730,19 +743,6 @@ public extension Matrix3 {
     }
     
     public static func ==(lhs: Matrix3, rhs: Matrix3) -> Bool {
-        if lhs.m11 != rhs.m11 { return false }
-        if lhs.m12 != rhs.m12 { return false }
-        if lhs.m13 != rhs.m13 { return false }
-        if lhs.m21 != rhs.m21 { return false }
-        if lhs.m22 != rhs.m22 { return false }
-        if lhs.m23 != rhs.m23 { return false }
-        if lhs.m31 != rhs.m31 { return false }
-        if lhs.m32 != rhs.m32 { return false }
-        if lhs.m33 != rhs.m33 { return false }
-        return true
-    }
-    
-    public static func ~=(lhs: Matrix3, rhs: Matrix3) -> Bool {
         if !(lhs.m11 ~= rhs.m11) { return false }
         if !(lhs.m12 ~= rhs.m12) { return false }
         if !(lhs.m13 ~= rhs.m13) { return false }
@@ -754,6 +754,7 @@ public extension Matrix3 {
         if !(lhs.m33 ~= rhs.m33) { return false }
         return true
     }
+    
 }
 
 // MARK: Matrix4
@@ -1056,26 +1057,6 @@ public extension Matrix4 {
     }
     
     public static func ==(lhs: Matrix4, rhs: Matrix4) -> Bool {
-        if lhs.m11 != rhs.m11 { return false }
-        if lhs.m12 != rhs.m12 { return false }
-        if lhs.m13 != rhs.m13 { return false }
-        if lhs.m14 != rhs.m14 { return false }
-        if lhs.m21 != rhs.m21 { return false }
-        if lhs.m22 != rhs.m22 { return false }
-        if lhs.m23 != rhs.m23 { return false }
-        if lhs.m24 != rhs.m24 { return false }
-        if lhs.m31 != rhs.m31 { return false }
-        if lhs.m32 != rhs.m32 { return false }
-        if lhs.m33 != rhs.m33 { return false }
-        if lhs.m34 != rhs.m34 { return false }
-        if lhs.m41 != rhs.m41 { return false }
-        if lhs.m42 != rhs.m42 { return false }
-        if lhs.m43 != rhs.m43 { return false }
-        if lhs.m44 != rhs.m44 { return false }
-        return true
-    }
-    
-    public static func ~=(lhs: Matrix4, rhs: Matrix4) -> Bool {
         if !(lhs.m11 ~= rhs.m11) { return false }
         if !(lhs.m12 ~= rhs.m12) { return false }
         if !(lhs.m13 ~= rhs.m13) { return false }
@@ -1094,6 +1075,7 @@ public extension Matrix4 {
         if !(lhs.m44 ~= rhs.m44) { return false }
         return true
     }
+    
 }
 
 // MARK: Quaternion
@@ -1266,10 +1248,7 @@ public extension Quaternion {
     }
     
     public static func ==(lhs: Quaternion, rhs: Quaternion) -> Bool {
-        return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w
-    }
-    
-    public static func ~=(lhs: Quaternion, rhs: Quaternion) -> Bool {
         return lhs.x ~= rhs.x && lhs.y ~= rhs.y && lhs.z ~= rhs.z && lhs.w ~= rhs.w
     }
+    
 }
