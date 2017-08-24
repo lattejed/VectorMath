@@ -93,15 +93,42 @@ public struct Quaternion {
     public var w: Scalar
 }
 
-fileprivate extension Array where Element == Int {
-    func hashReduce() -> Int {
-        return self.reduce(5381) { ($0 << 5) &+ $0 &+ Int($1) } // DJB Hash
-    }
-}
 
 // MARK: Scalar
 
 public extension Scalar {
+    
+    /*
+     When comparing equality of floating point values we use an epsilon (for Swift's
+     Double it's ulpOfOne -- i.e., an error of one LSB). For hashing we have to use
+     another method. We could multiply the float by some arbitrary precision
+     (e.g., 1e12) and then round to an int but this leaves us open to overflow issues.
+     
+     The method we're using here takes a bitfield representation of the float (IEEE 754)
+     safely converted to a signed bit int with the last (least significant) byte
+     masked off. This is equivalent to comparison by ULP (with a larger margin of error)
+     and is compatible with hash representations of the floating point value.
+     
+     Example:
+     
+     let a: Double = 0.1 // 0.1000000000000000055511151231257827021181583404541015625
+     let b: Double = 0.2 // 0.2000000000000000111022302462515654042363166809082031250
+     let c: Double = 0.3 // 0.2999999999999999888977697537484345957636833190917968750
+     
+     By epsilon:
+     
+     a + b == c // false
+     abs((a + b) - c) < Double.ulpOfOne // true
+     
+     By hash:
+     
+     (a + b).hashValue == c.hashValue // false
+     (a + b).truncatedHashValue == c.truncatedHashValue // true
+     */
+    public var truncatedHashValue: Int {
+        return Int(truncatingBitPattern: self.bitPattern) & 0x7FFFFFFFFFFFFF00
+    }
+    
     public static let halfPi = pi / 2
     public static let quarterPi = pi / 4
     public static let twoPi = pi * 2
@@ -118,11 +145,28 @@ public extension Scalar {
     }
 }
 
+
+
+fileprivate extension Array where Element == Scalar {
+    
+    /*
+     The hashing of multi-element values was originally handled by the
+     (overflow safe) addition of the elements' hash values. Since
+     addition is commutative, this would cause collisions for common values
+     e.g., (1,-1) and (-1,1). We've subsituted a simple hash function here
+     so that hashes are order dendent.
+     */
+    
+    func hashReduce() -> Int {
+        return self.reduce(5381) { ($0 << 5) &+ $0 &+ Int($1.truncatedHashValue) } // DJB Hash
+    }
+}
+
 // MARK: Vector2
 
 extension Vector2: Hashable {
     public var hashValue: Int {
-        return [x.hashValue, y.hashValue].hashReduce()
+        return [x, y].hashReduce()
     }
 }
 
@@ -247,7 +291,7 @@ public extension Vector2 {
 
 extension Vector3: Hashable {
     public var hashValue: Int {
-        return [x.hashValue, y.hashValue, z.hashValue].hashReduce()
+        return [x, y, z].hashReduce()
     }
 }
 
@@ -396,7 +440,7 @@ public extension Vector3 {
 
 extension Vector4: Hashable {
     public var hashValue: Int {
-        return [x.hashValue, y.hashValue, z.hashValue, w.hashValue].hashReduce()
+        return [x, y, z, w].hashReduce()
     }
 }
 
@@ -551,9 +595,9 @@ public extension Vector4 {
 
 extension Matrix3: Hashable {
     public var hashValue: Int {
-        return [m11.hashValue, m12.hashValue, m13.hashValue,
-                m21.hashValue, m22.hashValue, m23.hashValue,
-                m31.hashValue, m32.hashValue, m33.hashValue].hashReduce()
+        return [m11, m12, m13,
+                m21, m22, m23,
+                m31, m32, m33].hashReduce()
     }
 }
 
@@ -716,10 +760,10 @@ public extension Matrix3 {
 
 extension Matrix4: Hashable {
     public var hashValue: Int {
-        return [m11.hashValue, m12.hashValue, m13.hashValue, m14.hashValue,
-                m21.hashValue, m22.hashValue, m23.hashValue, m24.hashValue,
-                m31.hashValue, m32.hashValue, m33.hashValue, m34.hashValue,
-                m41.hashValue, m42.hashValue, m43.hashValue, m44.hashValue].hashReduce()
+        return [m11, m12, m13, m14,
+                m21, m22, m23, m24,
+                m31, m32, m33, m34,
+                m41, m42, m43, m44].hashReduce()
     }
 }
 
@@ -1056,7 +1100,7 @@ public extension Matrix4 {
 
 extension Quaternion: Hashable {
     public var hashValue: Int {
-        return [x.hashValue, y.hashValue, z.hashValue, w.hashValue].hashReduce()
+        return [x, y, z, w].hashReduce()
     }
 }
 
