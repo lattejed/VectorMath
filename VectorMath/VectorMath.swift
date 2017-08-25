@@ -51,6 +51,8 @@
  
  We've made the Scalar ~= operator private. One, this operator is already used in Swift for pattern matching and two, we don't want to impose a project-wide epsilon comparison on Double, which Scalar is typealiased to.
  
+ Renamed the `sign` property as it conflicts with Double's `sign`. 
+ 
  */
 
 import Foundation
@@ -127,7 +129,7 @@ public extension Scalar {
      (e.g., 1e12) and then round to an int but this leaves us open to overflow issues.
      
      The method we're using here takes a bitfield representation of the float (IEEE 754)
-     safely converted to a signed bit int with the last (least significant) byte
+     safely converted to a signed int with the last (least significant) byte
      masked off. This is equivalent to comparison by ULP (with a larger margin of error)
      and is compatible with hash representations of the floating point value.
      
@@ -148,7 +150,8 @@ public extension Scalar {
      (a + b).truncatedHashValue == c.truncatedHashValue // true
      */
     public var truncatedHashValue: Int {
-        return Int(truncatingBitPattern: self.bitPattern) & 0x7FFFFFFFFFFFFF00
+        let uv = Int(truncatingBitPattern: self.bitPattern) & 0x7FFFFFFFFFFFFF00
+        return self.sign == .minus ? uv * -1 : uv
     }
     
     public static let halfPi = pi / 2
@@ -162,7 +165,7 @@ public extension Scalar {
         return Swift.abs(lhs - rhs) <= .epsilon
     }
 
-    fileprivate var sign: Scalar {
+    fileprivate var signAsSignedOne: Scalar {
         return self > 0 ? 1 : -1
     }
 }
@@ -1157,9 +1160,9 @@ public extension Quaternion {
         let z = sqrt(max(0, 1 - m.m11 - m.m22 + m.m33)) / 2
         let w = sqrt(max(0, 1 + m.m11 + m.m22 + m.m33)) / 2
         self.init(
-            x * (x * (m.m32 - m.m23)).sign,
-            y * (y * (m.m13 - m.m31)).sign,
-            z * (z * (m.m21 - m.m12)).sign,
+            x * (x * (m.m32 - m.m23)).signAsSignedOne,
+            y * (y * (m.m13 - m.m31)).signAsSignedOne,
+            z * (z * (m.m21 - m.m12)).signAsSignedOne,
             w
         )
     }
