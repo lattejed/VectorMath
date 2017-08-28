@@ -183,7 +183,7 @@ fileprivate extension Array where Element == Scalar {
      */
     
     func hashReduce() -> Int {
-        return self.reduce(5381) { ($0 << 5) &+ $0 &+ Int($1.truncatedHashValue) } // DJB Hash
+        return self.reduce(5381) { ($0 << 5) &+ ($0 >> 13) &+ $0 &+ Int($1.truncatedHashValue) }
     }
 }
 
