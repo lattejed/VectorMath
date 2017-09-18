@@ -150,7 +150,7 @@ public extension Scalar {
      (a + b).truncatedHashValue == c.truncatedHashValue // true
      */
     public var truncatedHashValue: Int {
-        let uv = Int(truncatingBitPattern: self.bitPattern) & 0x7FFFFFFFFFFFFF00
+        let uv = Int(truncatingIfNeeded: self.bitPattern) & 0x7FFFFFFFFFFFFF00
         return self.sign == .minus ? uv * -1 : uv
     }
     
