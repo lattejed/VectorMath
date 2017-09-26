@@ -66,12 +66,13 @@ public typealias Scalar = Double
 public struct Vector2 {
     public let x: Scalar
     public let y: Scalar
-    private let _hashValue: LazyHash
+    public var hashStringValue: String { return _hash.stringValue }
+    private let _hash: LazyHash
     init(x: Scalar, y: Scalar) {
         self.x = x
         self.y = y
-        self._hashValue = LazyHash({
-            return [x, y].hashReduce()
+        self._hash = LazyHash({
+            return [x, y].concatenatedStringHash()
         })
     }
 }
@@ -80,13 +81,14 @@ public struct Vector3 {
     public let x: Scalar
     public let y: Scalar
     public let z: Scalar
-    private let _hashValue: LazyHash
+    public var hashStringValue: String { return _hash.stringValue }
+    private let _hash: LazyHash
     init(x: Scalar, y: Scalar, z: Scalar) {
         self.x = x
         self.y = y
         self.z = z
-        self._hashValue = LazyHash({
-            return [x, y, z].hashReduce()
+        self._hash = LazyHash({
+            return [x, y, z].concatenatedStringHash()
         })
     }
 }
@@ -96,14 +98,15 @@ public struct Vector4 {
     public let y: Scalar
     public let z: Scalar
     public let w: Scalar
-    private let _hashValue: LazyHash
+    public var hashStringValue: String { return _hash.stringValue }
+    private let _hash: LazyHash
     init(x: Scalar, y: Scalar, z: Scalar, w: Scalar) {
         self.x = x
         self.y = y
         self.z = z
         self.w = w
-        self._hashValue = LazyHash({
-            return [x, y, z, w].hashReduce()
+        self._hash = LazyHash({
+            return [x, y, z, w].concatenatedStringHash()
         })
     }
 }
@@ -118,17 +121,18 @@ public struct Matrix3 {
     public let m31: Scalar
     public let m32: Scalar
     public let m33: Scalar
-    private let _hashValue: LazyHash
+    public var hashStringValue: String { return _hash.stringValue }
+    private let _hash: LazyHash
     init(m11: Scalar, m12: Scalar, m13: Scalar,
          m21: Scalar, m22: Scalar, m23: Scalar,
          m31: Scalar, m32: Scalar, m33: Scalar) {
         self.m11 = m11; self.m12 = m12; self.m13 = m13
         self.m21 = m21; self.m22 = m22; self.m23 = m23
         self.m31 = m31; self.m32 = m32; self.m33 = m33
-        self._hashValue = LazyHash({
+        self._hash = LazyHash({
             return [m11, m12, m13,
                     m21, m22, m23,
-                    m31, m32, m33].hashReduce()
+                    m31, m32, m33].concatenatedStringHash()
         })
     }
 }
@@ -150,7 +154,8 @@ public struct Matrix4 {
     public let m42: Scalar
     public let m43: Scalar
     public let m44: Scalar
-    private let _hashValue: LazyHash
+    public var hashStringValue: String { return _hash.stringValue }
+    private let _hash: LazyHash
     init(m11: Scalar, m12: Scalar, m13: Scalar, m14: Scalar,
          m21: Scalar, m22: Scalar, m23: Scalar, m24: Scalar,
          m31: Scalar, m32: Scalar, m33: Scalar, m34: Scalar,
@@ -159,11 +164,11 @@ public struct Matrix4 {
         self.m21 = m21; self.m22 = m22; self.m23 = m23; self.m24 = m24
         self.m31 = m31; self.m32 = m32; self.m33 = m33; self.m34 = m34
         self.m41 = m41; self.m42 = m42; self.m43 = m43; self.m44 = m44
-        self._hashValue = LazyHash({
+        self._hash = LazyHash({
             return [m11, m12, m13, m14,
                     m21, m22, m23, m24,
                     m31, m32, m33, m34,
-                    m41, m42, m43, m44].hashReduce()
+                    m41, m42, m43, m44].concatenatedStringHash()
         })
     }
 }
@@ -173,14 +178,15 @@ public struct Quaternion {
     public let y: Scalar
     public let z: Scalar
     public let w: Scalar
-    private let _hashValue: LazyHash
+    public var hashStringValue: String { return _hash.stringValue }
+    private let _hash: LazyHash
     init(x: Scalar, y: Scalar, z: Scalar, w: Scalar) {
         self.x = x
         self.y = y
         self.z = z
         self.w = w
-        self._hashValue = LazyHash({
-            return [x, y, z, w].hashReduce()
+        self._hash = LazyHash({
+            return [x, y, z, w].concatenatedStringHash()
         })
     }
 }
@@ -188,17 +194,17 @@ public struct Quaternion {
 private class LazyHash {
     
     private enum Value {
-        case Initialized(() -> Int)
-        case Computed(Int)
+        case Initialized(() -> String)
+        case Computed(String)
     }
     
-    init(_ block: @escaping () -> Int) {
+    init(_ block: @escaping () -> String) {
         _value = .Initialized(block)
     }
     
     private var _value: Value
     
-    var value: Int {
+    var stringValue: String {
         switch self._value {
         case .Initialized(let block):
             let val = block()
@@ -207,6 +213,10 @@ private class LazyHash {
         case .Computed(let val):
             return val
         }
+    }
+    
+    var intValue: Int {
+        return stringValue.hashValue
     }
 }
 
@@ -283,8 +293,8 @@ fileprivate extension Array where Element == Scalar {
      e.g., (1,-1) and (-1,1).
      */
     
-    func hashReduce() -> Int {
-        return self.reduce("") { $0 + $1.truncatedHashValueStringRep }.hashValue
+    func concatenatedStringHash() -> String {
+        return self.reduce("") { $0 + $1.truncatedHashValueStringRep }
     }
 }
 
@@ -292,7 +302,7 @@ fileprivate extension Array where Element == Scalar {
 
 extension Vector2: Hashable {
     public var hashValue: Int {
-        return _hashValue.value
+        return _hash.intValue
     }
 }
 
@@ -414,7 +424,7 @@ public extension Vector2 {
 
 extension Vector3: Hashable {
     public var hashValue: Int {
-        return _hashValue.value
+        return _hash.intValue
     }
 }
 
@@ -548,7 +558,7 @@ public extension Vector3 {
 
 extension Vector4: Hashable {
     public var hashValue: Int {
-        return _hashValue.value
+        return _hash.intValue
     }
 }
 
@@ -683,7 +693,7 @@ public extension Vector4 {
 
 extension Matrix3: Hashable {
     public var hashValue: Int {
-        return _hashValue.value
+        return _hash.intValue
     }
 }
 
@@ -827,7 +837,7 @@ public extension Matrix3 {
 
 extension Matrix4: Hashable {
     public var hashValue: Int {
-        return _hashValue.value
+        return _hash.intValue
     }
 }
 
@@ -1120,7 +1130,7 @@ public extension Matrix4 {
 
 extension Quaternion: Hashable {
     public var hashValue: Int {
-        return _hashValue.value
+        return _hash.intValue
     }
 }
 
