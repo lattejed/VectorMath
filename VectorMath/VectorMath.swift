@@ -51,7 +51,9 @@
  
  We've made the Scalar ~= operator private. One, this operator is already used in Swift for pattern matching and two, we don't want to impose a project-wide epsilon comparison on Double, which Scalar is typealiased to.
  
- Renamed the `sign` property as it conflicts with Double's `sign`. 
+ Renamed the `sign` property as it conflicts with Double's `sign`.
+ 
+ One of the simpler but critical changes (for working with the library and for performance) was to make the VectorN and MatrixN structs immutable and cache their hash values.
  
  */
 
@@ -64,12 +66,25 @@ public typealias Scalar = Double
 public struct Vector2 {
     public let x: Scalar
     public let y: Scalar
+    private let _hashValue: Int
+    init(x: Scalar, y: Scalar) {
+        self.x = x
+        self.y = y
+        self._hashValue = [x, y].hashReduce()
+    }
 }
 
 public struct Vector3 {
     public let x: Scalar
     public let y: Scalar
     public let z: Scalar
+    private let _hashValue: Int
+    init(x: Scalar, y: Scalar, z: Scalar) {
+        self.x = x
+        self.y = y
+        self.z = z
+        self._hashValue = [x, y, z].hashReduce()
+    }
 }
 
 public struct Vector4 {
@@ -77,6 +92,14 @@ public struct Vector4 {
     public let y: Scalar
     public let z: Scalar
     public let w: Scalar
+    private let _hashValue: Int
+    init(x: Scalar, y: Scalar, z: Scalar, w: Scalar) {
+        self.x = x
+        self.y = y
+        self.z = z
+        self.w = w
+        self._hashValue = [x, y, z, w].hashReduce()
+    }
 }
 
 public struct Matrix3 {
@@ -89,6 +112,17 @@ public struct Matrix3 {
     public let m31: Scalar
     public let m32: Scalar
     public let m33: Scalar
+    private let _hashValue: Int
+    init(m11: Scalar, m12: Scalar, m13: Scalar,
+         m21: Scalar, m22: Scalar, m23: Scalar,
+         m31: Scalar, m32: Scalar, m33: Scalar) {
+        self.m11 = m11; self.m12 = m12; self.m13 = m13
+        self.m21 = m21; self.m22 = m22; self.m23 = m23
+        self.m31 = m31; self.m32 = m32; self.m33 = m33
+        self._hashValue = [m11, m12, m13,
+                           m21, m22, m23,
+                           m31, m32, m33].hashReduce()
+    }
 }
 
 public struct Matrix4 {
@@ -108,6 +142,20 @@ public struct Matrix4 {
     public let m42: Scalar
     public let m43: Scalar
     public let m44: Scalar
+    private let _hashValue: Int
+    init(m11: Scalar, m12: Scalar, m13: Scalar, m14: Scalar,
+         m21: Scalar, m22: Scalar, m23: Scalar, m24: Scalar,
+         m31: Scalar, m32: Scalar, m33: Scalar, m34: Scalar,
+         m41: Scalar, m42: Scalar, m43: Scalar, m44: Scalar) {
+        self.m11 = m11; self.m12 = m12; self.m13 = m13; self.m14 = m14
+        self.m21 = m21; self.m22 = m22; self.m23 = m23; self.m24 = m24
+        self.m31 = m31; self.m32 = m32; self.m33 = m33; self.m34 = m34
+        self.m41 = m41; self.m42 = m42; self.m43 = m43; self.m44 = m44
+        self._hashValue = [m11, m12, m13, m14,
+                           m21, m22, m23, m24,
+                           m31, m32, m33, m34,
+                           m41, m42, m43, m44].hashReduce()
+    }
 }
 
 public struct Quaternion {
@@ -115,6 +163,14 @@ public struct Quaternion {
     public let y: Scalar
     public let z: Scalar
     public let w: Scalar
+    private let _hashValue: Int
+    init(x: Scalar, y: Scalar, z: Scalar, w: Scalar) {
+        self.x = x
+        self.y = y
+        self.z = z
+        self.w = w
+        self._hashValue = [x, y, z, w].hashReduce()
+    }
 }
 
 
@@ -191,7 +247,7 @@ fileprivate extension Array where Element == Scalar {
 
 extension Vector2: Hashable {
     public var hashValue: Int {
-        return [x, y].hashReduce()
+        return _hashValue
     }
 }
 
@@ -313,7 +369,7 @@ public extension Vector2 {
 
 extension Vector3: Hashable {
     public var hashValue: Int {
-        return [x, y, z].hashReduce()
+        return _hashValue
     }
 }
 
@@ -447,7 +503,7 @@ public extension Vector3 {
 
 extension Vector4: Hashable {
     public var hashValue: Int {
-        return [x, y, z, w].hashReduce()
+        return _hashValue
     }
 }
 
@@ -582,9 +638,7 @@ public extension Vector4 {
 
 extension Matrix3: Hashable {
     public var hashValue: Int {
-        return [m11, m12, m13,
-                m21, m22, m23,
-                m31, m32, m33].hashReduce()
+        return _hashValue
     }
 }
 
@@ -594,16 +648,9 @@ public extension Matrix3 {
     public init(_ m11: Scalar, _ m12: Scalar, _ m13: Scalar,
                 _ m21: Scalar, _ m22: Scalar, _ m23: Scalar,
                 _ m31: Scalar, _ m32: Scalar, _ m33: Scalar) {
-        
-        self.m11 = m11 // 0
-        self.m12 = m12 // 1
-        self.m13 = m13 // 2
-        self.m21 = m21 // 3
-        self.m22 = m22 // 4
-        self.m23 = m23 // 5
-        self.m31 = m31 // 6
-        self.m32 = m32 // 7
-        self.m33 = m33 // 8
+        self.init(m11: m11, m12: m12, m13: m13,
+                  m21: m21, m22: m22, m23: m23,
+                  m31: m31, m32: m32, m33: m33)
     }
     
     public init(scale: Vector2) {
@@ -735,10 +782,7 @@ public extension Matrix3 {
 
 extension Matrix4: Hashable {
     public var hashValue: Int {
-        return [m11, m12, m13, m14,
-                m21, m22, m23, m24,
-                m31, m32, m33, m34,
-                m41, m42, m43, m44].hashReduce()
+        return _hashValue
     }
 }
 
@@ -749,23 +793,10 @@ public extension Matrix4 {
                 _ m21: Scalar, _ m22: Scalar, _ m23: Scalar, _ m24: Scalar,
                 _ m31: Scalar, _ m32: Scalar, _ m33: Scalar, _ m34: Scalar,
                 _ m41: Scalar, _ m42: Scalar, _ m43: Scalar, _ m44: Scalar) {
-        
-        self.m11 = m11 // 0
-        self.m12 = m12 // 1
-        self.m13 = m13 // 2
-        self.m14 = m14 // 3
-        self.m21 = m21 // 4
-        self.m22 = m22 // 5
-        self.m23 = m23 // 6
-        self.m24 = m24 // 7
-        self.m31 = m31 // 8
-        self.m32 = m32 // 9
-        self.m33 = m33 // 10
-        self.m34 = m34 // 11
-        self.m41 = m41 // 12
-        self.m42 = m42 // 13
-        self.m43 = m43 // 14
-        self.m44 = m44 // 15
+        self.init(m11: m11, m12: m12, m13: m13, m14: m14,
+                  m21: m21, m22: m22, m23: m23, m24: m24,
+                  m31: m31, m32: m32, m33: m33, m34: m34,
+                  m41: m41, m42: m42, m43: m43, m44: m44)
     }
     
     public init(scale s: Vector3) {
@@ -840,23 +871,10 @@ public extension Matrix4 {
     
     public init(_ m: [Scalar]) {
         assert(m.count == 16, "array must contain 16 elements, contained \(m.count)")
-        
-        m11 = m[0]
-        m12 = m[1]
-        m13 = m[2]
-        m14 = m[3]
-        m21 = m[4]
-        m22 = m[5]
-        m23 = m[6]
-        m24 = m[7]
-        m31 = m[8]
-        m32 = m[9]
-        m33 = m[10]
-        m34 = m[11]
-        m41 = m[12]
-        m42 = m[13]
-        m43 = m[14]
-        m44 = m[15]
+        self.init(m11: m[0], m12: m[1], m13: m[2], m14: m[3],
+                  m21: m[4], m22: m[5], m23: m[6], m24: m[7],
+                  m31: m[8], m32: m[9], m33: m[10], m34: m[11],
+                  m41: m[12], m42: m[13], m43: m[14], m44: m[15])
     }
     
     public func toArray() -> [Scalar] {
@@ -1058,7 +1076,7 @@ public extension Matrix4 {
 
 extension Quaternion: Hashable {
     public var hashValue: Int {
-        return [x, y, z, w].hashReduce()
+        return _hashValue
     }
 }
 
@@ -1137,11 +1155,7 @@ public extension Quaternion {
     
     public init(_ v: [Scalar]) {
         assert(v.count == 4, "array must contain 4 elements, contained \(v.count)")
-        
-        x = v[0]
-        y = v[1]
-        z = v[2]
-        w = v[3]
+        self.init(x: v[0], y: v[1], z: v[2], w: v[3])
     }
     
     public func toAxisAngle() -> Vector4 {
