@@ -255,7 +255,7 @@ public extension Scalar {
      (a + b).truncatedHashValue == c.truncatedHashValue // true
      */
     
-    private var truncatedHasValuePrecision: Double { return 14 }
+    private var truncatedHasValuePrecision: Int { return 14 }
 
     public var truncatedHashValueStringRep: String {
         let fmt = "%.\(truncatedHasValuePrecision)f_"

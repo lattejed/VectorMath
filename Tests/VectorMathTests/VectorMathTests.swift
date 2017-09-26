@@ -13,6 +13,16 @@ fileprivate func ~=(lhs: Scalar, rhs: Scalar) -> Bool {
     return Swift.abs(lhs - rhs) <= .epsilon
 }
 
+class HashTests: XCTestCase {
+    
+    func testVector2() {
+        let a = Vector2(1.5, 2.5)
+        let b = Vector2(2.5, 1.5)
+        XCTAssertFalse(a.hashValue == b.hashValue)
+    }
+    
+}
+
 class Vector2Tests: XCTestCase {
     
     func testRotatedBy() {
