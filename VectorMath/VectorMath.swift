@@ -41,7 +41,7 @@
  
  Issues with Hashable conformance. The use of &+ overlflow-safe addition prevents exceptions but since addition is commutative we run into collisions with very common vector values, e.g., (+1,-1) and (-1,+1). It's better to use a hash function (DJB below) for this.
  
- Generating hash values for Scalars that can be compared in a way that's equivalent to using an epsilon value. In this case we take a standardized representation of the floating point value (a bitfield) and mask the least significant byte. This is conceptually equivalent to comparing with an epsilon value -- but does not suffer the big number issues inherent to rounding.
+ Generating hash values for Scalars that can be compared in a way that's equivalent to using an epsilon value. Notes about this are below.
  
  The original Scalar epslion value of 1e-4 is good for checking if, e.g., two vectors are visually equal -- occupy the same pixel -- given the low resolution of screens. This is a special case, however, and should not be used for approximate scalar equality in general.
  
@@ -66,11 +66,13 @@ public typealias Scalar = Double
 public struct Vector2 {
     public let x: Scalar
     public let y: Scalar
-    private let _hashValue: Int
+    private let _hashValue: LazyHash
     init(x: Scalar, y: Scalar) {
         self.x = x
         self.y = y
-        self._hashValue = [x, y].hashReduce()
+        self._hashValue = LazyHash({
+            return [x, y].hashReduce()
+        })
     }
 }
 
@@ -78,12 +80,14 @@ public struct Vector3 {
     public let x: Scalar
     public let y: Scalar
     public let z: Scalar
-    private let _hashValue: Int
+    private let _hashValue: LazyHash
     init(x: Scalar, y: Scalar, z: Scalar) {
         self.x = x
         self.y = y
         self.z = z
-        self._hashValue = [x, y, z].hashReduce()
+        self._hashValue = LazyHash({
+            return [x, y, z].hashReduce()
+        })
     }
 }
 
@@ -92,13 +96,15 @@ public struct Vector4 {
     public let y: Scalar
     public let z: Scalar
     public let w: Scalar
-    private let _hashValue: Int
+    private let _hashValue: LazyHash
     init(x: Scalar, y: Scalar, z: Scalar, w: Scalar) {
         self.x = x
         self.y = y
         self.z = z
         self.w = w
-        self._hashValue = [x, y, z, w].hashReduce()
+        self._hashValue = LazyHash({
+            return [x, y, z, w].hashReduce()
+        })
     }
 }
 
@@ -112,16 +118,18 @@ public struct Matrix3 {
     public let m31: Scalar
     public let m32: Scalar
     public let m33: Scalar
-    private let _hashValue: Int
+    private let _hashValue: LazyHash
     init(m11: Scalar, m12: Scalar, m13: Scalar,
          m21: Scalar, m22: Scalar, m23: Scalar,
          m31: Scalar, m32: Scalar, m33: Scalar) {
         self.m11 = m11; self.m12 = m12; self.m13 = m13
         self.m21 = m21; self.m22 = m22; self.m23 = m23
         self.m31 = m31; self.m32 = m32; self.m33 = m33
-        self._hashValue = [m11, m12, m13,
-                           m21, m22, m23,
-                           m31, m32, m33].hashReduce()
+        self._hashValue = LazyHash({
+            return [m11, m12, m13,
+                    m21, m22, m23,
+                    m31, m32, m33].hashReduce()
+        })
     }
 }
 
@@ -142,7 +150,7 @@ public struct Matrix4 {
     public let m42: Scalar
     public let m43: Scalar
     public let m44: Scalar
-    private let _hashValue: Int
+    private let _hashValue: LazyHash
     init(m11: Scalar, m12: Scalar, m13: Scalar, m14: Scalar,
          m21: Scalar, m22: Scalar, m23: Scalar, m24: Scalar,
          m31: Scalar, m32: Scalar, m33: Scalar, m34: Scalar,
@@ -151,10 +159,12 @@ public struct Matrix4 {
         self.m21 = m21; self.m22 = m22; self.m23 = m23; self.m24 = m24
         self.m31 = m31; self.m32 = m32; self.m33 = m33; self.m34 = m34
         self.m41 = m41; self.m42 = m42; self.m43 = m43; self.m44 = m44
-        self._hashValue = [m11, m12, m13, m14,
-                           m21, m22, m23, m24,
-                           m31, m32, m33, m34,
-                           m41, m42, m43, m44].hashReduce()
+        self._hashValue = LazyHash({
+            return [m11, m12, m13, m14,
+                    m21, m22, m23, m24,
+                    m31, m32, m33, m34,
+                    m41, m42, m43, m44].hashReduce()
+        })
     }
 }
 
@@ -163,16 +173,42 @@ public struct Quaternion {
     public let y: Scalar
     public let z: Scalar
     public let w: Scalar
-    private let _hashValue: Int
+    private let _hashValue: LazyHash
     init(x: Scalar, y: Scalar, z: Scalar, w: Scalar) {
         self.x = x
         self.y = y
         self.z = z
         self.w = w
-        self._hashValue = [x, y, z, w].hashReduce()
+        self._hashValue = LazyHash({
+            return [x, y, z, w].hashReduce()
+        })
     }
 }
 
+private class LazyHash {
+    
+    private enum Value {
+        case Initialized(() -> Int)
+        case Computed(Int)
+    }
+    
+    init(_ block: @escaping () -> Int) {
+        _value = .Initialized(block)
+    }
+    
+    private var _value: Value
+    
+    var value: Int {
+        switch self._value {
+        case .Initialized(let block):
+            let val = block()
+            self._value = .Computed(val)
+            return val
+        case .Computed(let val):
+            return val
+        }
+    }
+}
 
 // MARK: Scalar
 
@@ -184,10 +220,13 @@ public extension Scalar {
      another method. We could multiply the float by some arbitrary precision
      (e.g., 1e12) and then round to an int but this leaves us open to overflow issues.
      
-     The method we're using here takes a bitfield representation of the float (IEEE 754)
-     safely converted to a signed int with the last (least significant) byte
-     masked off. This is equivalent to comparison by ULP (with a larger margin of error)
-     and is compatible with hash representations of the floating point value.
+     Here we're simply formatting the float as a string with N decimal places -- roughly
+     equivalent to masking off the last N bits of the float's mantissa. While it's conceptually
+     cleaner to work on integer values or bitfields, in practice this results in too many
+     collisions since common float values will have long runs of zeros. This causes
+     issues with bit-shifting values, which is a common hashing strategy.
+     
+     Since we're lazy calc / caching the hash value, performance isn't an issue.
      
      Example:
      
@@ -205,9 +244,16 @@ public extension Scalar {
      (a + b).hashValue == c.hashValue // false
      (a + b).truncatedHashValue == c.truncatedHashValue // true
      */
+    
+    private var truncatedHasValuePrecision: Double { return 14 }
+
+    public var truncatedHashValueStringRep: String {
+        let fmt = "%.\(truncatedHasValuePrecision)f_"
+        return String(format: fmt, self)
+    }
+
     public var truncatedHashValue: Int {
-        let uv = Int(truncatingIfNeeded: self.bitPattern) & 0x7FFFFFFFFFFFFF00
-        return self.sign == .minus ? uv * -1 : uv
+        return truncatedHashValueStringRep.hashValue
     }
     
     public static let halfPi = pi / 2
@@ -234,12 +280,11 @@ fileprivate extension Array where Element == Scalar {
      The hashing of multi-element values was originally handled by the
      (overflow safe) addition of the elements' hash values. Since
      addition is commutative, this would cause collisions for common values
-     e.g., (1,-1) and (-1,1). We've subsituted a simple hash function here
-     so that hashes are order dendent.
+     e.g., (1,-1) and (-1,1).
      */
     
     func hashReduce() -> Int {
-        return self.reduce(5381) { ($0 << 5) &+ ($0 >> 13) &+ $0 &+ Int($1.truncatedHashValue) }
+        return self.reduce("") { $0 + $1.truncatedHashValueStringRep }.hashValue
     }
 }
 
@@ -247,7 +292,7 @@ fileprivate extension Array where Element == Scalar {
 
 extension Vector2: Hashable {
     public var hashValue: Int {
-        return _hashValue
+        return _hashValue.value
     }
 }
 
@@ -369,7 +414,7 @@ public extension Vector2 {
 
 extension Vector3: Hashable {
     public var hashValue: Int {
-        return _hashValue
+        return _hashValue.value
     }
 }
 
@@ -496,14 +541,14 @@ public extension Vector3 {
     public static func ==(lhs: Vector3, rhs: Vector3) -> Bool {
         return lhs.x ~= rhs.x && lhs.y ~= rhs.y && lhs.z ~= rhs.z
     }
-    
+
 }
 
 // MARK: Vector4
 
 extension Vector4: Hashable {
     public var hashValue: Int {
-        return _hashValue
+        return _hashValue.value
     }
 }
 
@@ -631,14 +676,14 @@ public extension Vector4 {
     public static func ==(lhs: Vector4, rhs: Vector4) -> Bool {
         return lhs.x ~= rhs.x && lhs.y ~= rhs.y && lhs.z ~= rhs.z && lhs.w ~= rhs.w
     }
-    
+
 }
 
 // MARK: Matrix3
 
 extension Matrix3: Hashable {
     public var hashValue: Int {
-        return _hashValue
+        return _hashValue.value
     }
 }
 
@@ -782,7 +827,7 @@ public extension Matrix3 {
 
 extension Matrix4: Hashable {
     public var hashValue: Int {
-        return _hashValue
+        return _hashValue.value
     }
 }
 
@@ -1069,14 +1114,13 @@ public extension Matrix4 {
         if !(lhs.m44 ~= rhs.m44) { return false }
         return true
     }
-    
 }
 
 // MARK: Quaternion
 
 extension Quaternion: Hashable {
     public var hashValue: Int {
-        return _hashValue
+        return _hashValue.value
     }
 }
 
