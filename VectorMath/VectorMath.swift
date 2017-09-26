@@ -62,59 +62,59 @@ import Foundation
 public typealias Scalar = Double
 
 public struct Vector2 {
-    public var x: Scalar
-    public var y: Scalar
+    public let x: Scalar
+    public let y: Scalar
 }
 
 public struct Vector3 {
-    public var x: Scalar
-    public var y: Scalar
-    public var z: Scalar
+    public let x: Scalar
+    public let y: Scalar
+    public let z: Scalar
 }
 
 public struct Vector4 {
-    public var x: Scalar
-    public var y: Scalar
-    public var z: Scalar
-    public var w: Scalar
+    public let x: Scalar
+    public let y: Scalar
+    public let z: Scalar
+    public let w: Scalar
 }
 
 public struct Matrix3 {
-    public var m11: Scalar
-    public var m12: Scalar
-    public var m13: Scalar
-    public var m21: Scalar
-    public var m22: Scalar
-    public var m23: Scalar
-    public var m31: Scalar
-    public var m32: Scalar
-    public var m33: Scalar
+    public let m11: Scalar
+    public let m12: Scalar
+    public let m13: Scalar
+    public let m21: Scalar
+    public let m22: Scalar
+    public let m23: Scalar
+    public let m31: Scalar
+    public let m32: Scalar
+    public let m33: Scalar
 }
 
 public struct Matrix4 {
-    public var m11: Scalar
-    public var m12: Scalar
-    public var m13: Scalar
-    public var m14: Scalar
-    public var m21: Scalar
-    public var m22: Scalar
-    public var m23: Scalar
-    public var m24: Scalar
-    public var m31: Scalar
-    public var m32: Scalar
-    public var m33: Scalar
-    public var m34: Scalar
-    public var m41: Scalar
-    public var m42: Scalar
-    public var m43: Scalar
-    public var m44: Scalar
+    public let m11: Scalar
+    public let m12: Scalar
+    public let m13: Scalar
+    public let m14: Scalar
+    public let m21: Scalar
+    public let m22: Scalar
+    public let m23: Scalar
+    public let m24: Scalar
+    public let m31: Scalar
+    public let m32: Scalar
+    public let m33: Scalar
+    public let m34: Scalar
+    public let m41: Scalar
+    public let m42: Scalar
+    public let m43: Scalar
+    public let m44: Scalar
 }
 
 public struct Quaternion {
-    public var x: Scalar
-    public var y: Scalar
-    public var z: Scalar
-    public var w: Scalar
+    public let x: Scalar
+    public let y: Scalar
+    public let z: Scalar
+    public let w: Scalar
 }
 
 
@@ -339,29 +339,17 @@ public extension Vector3 {
         get {
             return Vector2(x, y)
         }
-        set(v) {
-            x = v.x
-            y = v.y
-        }
     }
     
     public var xz: Vector2 {
         get {
             return Vector2(x, z)
         }
-        set(v) {
-            x = v.x
-            z = v.y
-        }
     }
     
     public var yz: Vector2 {
         get {
             return Vector2(y, z)
-        }
-        set(v) {
-            y = v.x
-            z = v.y
         }
     }
     
@@ -486,20 +474,11 @@ public extension Vector4 {
         get {
             return Vector3(x, y, z)
         }
-        set(v) {
-            x = v.x
-            y = v.y
-            z = v.z
-        }
     }
     
     public var xy: Vector2 {
         get {
             return Vector2(x, y)
-        }
-        set(v) {
-            x = v.x
-            y = v.y
         }
     }
     
@@ -507,19 +486,11 @@ public extension Vector4 {
         get {
             return Vector2(x, z)
         }
-        set(v) {
-            x = v.x
-            z = v.y
-        }
     }
     
     public var yz: Vector2 {
         get {
             return Vector2(y, z)
-        }
-        set(v) {
-            y = v.x
-            z = v.y
         }
     }
     
@@ -893,73 +864,74 @@ public extension Matrix4 {
     }
     
     public var adjugate: Matrix4 {
-        var m = Matrix4.identity
         
-        m.m11 = m22 * m33 * m44 - m22 * m34 * m43
-        m.m11 += -m32 * m23 * m44 + m32 * m24 * m43
-        m.m11 += m42 * m23 * m34 - m42 * m24 * m33
+        var scalars = Matrix4.identity.toArray()
         
-        m.m21 = -m21 * m33 * m44 + m21 * m34 * m43
-        m.m21 += m31 * m23 * m44 - m31 * m24 * m43
-        m.m21 += -m41 * m23 * m34 + m41 * m24 * m33
+        scalars[0] = m22 * m33 * m44 - m22 * m34 * m43
+        scalars[0] += -m32 * m23 * m44 + m32 * m24 * m43
+        scalars[0] += m42 * m23 * m34 - m42 * m24 * m33
         
-        m.m31 = m21 * m32 * m44 - m21 * m34 * m42
-        m.m31 += -m31 * m22 * m44 + m31 * m24 * m42
-        m.m31 += m41 * m22 * m34 - m41 * m24 * m32
+        scalars[4] = -m21 * m33 * m44 + m21 * m34 * m43
+        scalars[4] += m31 * m23 * m44 - m31 * m24 * m43
+        scalars[4] += -m41 * m23 * m34 + m41 * m24 * m33
         
-        m.m41 = -m21 * m32 * m43 + m21 * m33 * m42
-        m.m41 += m31 * m22 * m43 - m31 * m23 * m42
-        m.m41 += -m41 * m22 * m33 + m41 * m23 * m32
+        scalars[8] = m21 * m32 * m44 - m21 * m34 * m42
+        scalars[8] += -m31 * m22 * m44 + m31 * m24 * m42
+        scalars[8] += m41 * m22 * m34 - m41 * m24 * m32
         
-        m.m12 = -m12 * m33 * m44 + m12 * m34 * m43
-        m.m12 += m32 * m13 * m44 - m32 * m14 * m43
-        m.m12 += -m42 * m13 * m34 + m42 * m14 * m33
+        scalars[12] = -m21 * m32 * m43 + m21 * m33 * m42
+        scalars[12] += m31 * m22 * m43 - m31 * m23 * m42
+        scalars[12] += -m41 * m22 * m33 + m41 * m23 * m32
         
-        m.m22 = m11 * m33 * m44 - m11 * m34 * m43
-        m.m22 += -m31 * m13 * m44 + m31 * m14 * m43
-        m.m22 += m41 * m13 * m34 - m41 * m14 * m33
+        scalars[1] = -m12 * m33 * m44 + m12 * m34 * m43
+        scalars[1] += m32 * m13 * m44 - m32 * m14 * m43
+        scalars[1] += -m42 * m13 * m34 + m42 * m14 * m33
         
-        m.m32 = -m11 * m32 * m44 + m11 * m34 * m42
-        m.m32 += m31 * m12 * m44 - m31 * m14 * m42
-        m.m32 += -m41 * m12 * m34 + m41 * m14 * m32
+        scalars[5] = m11 * m33 * m44 - m11 * m34 * m43
+        scalars[5] += -m31 * m13 * m44 + m31 * m14 * m43
+        scalars[5] += m41 * m13 * m34 - m41 * m14 * m33
         
-        m.m42 = m11 * m32 * m43 - m11 * m33 * m42
-        m.m42 += -m31 * m12 * m43 + m31 * m13 * m42
-        m.m42 += m41 * m12 * m33 - m41 * m13 * m32
+        scalars[9] = -m11 * m32 * m44 + m11 * m34 * m42
+        scalars[9] += m31 * m12 * m44 - m31 * m14 * m42
+        scalars[9] += -m41 * m12 * m34 + m41 * m14 * m32
         
-        m.m13 = m12 * m23 * m44 - m12 * m24 * m43
-        m.m13 += -m22 * m13 * m44 + m22 * m14 * m43
-        m.m13 += m42 * m13 * m24 - m42 * m14 * m23
+        scalars[13] = m11 * m32 * m43 - m11 * m33 * m42
+        scalars[13] += -m31 * m12 * m43 + m31 * m13 * m42
+        scalars[13] += m41 * m12 * m33 - m41 * m13 * m32
         
-        m.m23 = -m11 * m23 * m44 + m11 * m24 * m43
-        m.m23 += m21 * m13 * m44 - m21 * m14 * m43
-        m.m23 += -m41 * m13 * m24 + m41 * m14 * m23
+        scalars[2] = m12 * m23 * m44 - m12 * m24 * m43
+        scalars[2] += -m22 * m13 * m44 + m22 * m14 * m43
+        scalars[2] += m42 * m13 * m24 - m42 * m14 * m23
         
-        m.m33 = m11 * m22 * m44 - m11 * m24 * m42
-        m.m33 += -m21 * m12 * m44 + m21 * m14 * m42
-        m.m33 += m41 * m12 * m24 - m41 * m14 * m22
+        scalars[6] = -m11 * m23 * m44 + m11 * m24 * m43
+        scalars[6] += m21 * m13 * m44 - m21 * m14 * m43
+        scalars[6] += -m41 * m13 * m24 + m41 * m14 * m23
         
-        m.m43 = -m11 * m22 * m43 + m11 * m23 * m42
-        m.m43 += m21 * m12 * m43 - m21 * m13 * m42
-        m.m43 += -m41 * m12 * m23 + m41 * m13 * m22
+        scalars[10] = m11 * m22 * m44 - m11 * m24 * m42
+        scalars[10] += -m21 * m12 * m44 + m21 * m14 * m42
+        scalars[10] += m41 * m12 * m24 - m41 * m14 * m22
         
-        m.m14 = -m12 * m23 * m34 + m12 * m24 * m33
-        m.m14 += m22 * m13 * m34 - m22 * m14 * m33
-        m.m14 += -m32 * m13 * m24 + m32 * m14 * m23
+        scalars[14] = -m11 * m22 * m43 + m11 * m23 * m42
+        scalars[14] += m21 * m12 * m43 - m21 * m13 * m42
+        scalars[14] += -m41 * m12 * m23 + m41 * m13 * m22
         
-        m.m24 = m11 * m23 * m34 - m11 * m24 * m33
-        m.m24 += -m21 * m13 * m34 + m21 * m14 * m33
-        m.m24 += m31 * m13 * m24 - m31 * m14 * m23
+        scalars[3] = -m12 * m23 * m34 + m12 * m24 * m33
+        scalars[3] += m22 * m13 * m34 - m22 * m14 * m33
+        scalars[3] += -m32 * m13 * m24 + m32 * m14 * m23
         
-        m.m34 = -m11 * m22 * m34 + m11 * m24 * m32
-        m.m34 += m21 * m12 * m34 - m21 * m14 * m32
-        m.m34 += -m31 * m12 * m24 + m31 * m14 * m22
+        scalars[7] = m11 * m23 * m34 - m11 * m24 * m33
+        scalars[7] += -m21 * m13 * m34 + m21 * m14 * m33
+        scalars[7] += m31 * m13 * m24 - m31 * m14 * m23
         
-        m.m44 = m11 * m22 * m33 - m11 * m23 * m32
-        m.m44 += -m21 * m12 * m33 + m21 * m13 * m32
-        m.m44 += m31 * m12 * m23 - m31 * m13 * m22
+        scalars[11] = -m11 * m22 * m34 + m11 * m24 * m32
+        scalars[11] += m21 * m12 * m34 - m21 * m14 * m32
+        scalars[11] += -m31 * m12 * m24 + m31 * m14 * m22
         
-        return m
+        scalars[15] = m11 * m22 * m33 - m11 * m23 * m32
+        scalars[15] += -m21 * m12 * m33 + m21 * m13 * m32
+        scalars[15] += m31 * m12 * m23 - m31 * m13 * m22
+        
+        return Matrix4(scalars)
     }
     
     private func determinant(forAdjugate m: Matrix4) -> Scalar {
@@ -989,57 +961,58 @@ public extension Matrix4 {
     }
     
     public static func *(lhs: Matrix4, rhs: Matrix4) -> Matrix4 {
-        var m = Matrix4.identity
         
-        m.m11 = lhs.m11 * rhs.m11 + lhs.m21 * rhs.m12
-        m.m11 += lhs.m31 * rhs.m13 + lhs.m41 * rhs.m14
+        var scalars = Matrix4.identity.toArray()
         
-        m.m12 = lhs.m12 * rhs.m11 + lhs.m22 * rhs.m12
-        m.m12 += lhs.m32 * rhs.m13 + lhs.m42 * rhs.m14
+        scalars[0] = lhs.m11 * rhs.m11 + lhs.m21 * rhs.m12
+        scalars[0] += lhs.m31 * rhs.m13 + lhs.m41 * rhs.m14
         
-        m.m13 = lhs.m13 * rhs.m11 + lhs.m23 * rhs.m12
-        m.m13 += lhs.m33 * rhs.m13 + lhs.m43 * rhs.m14
+        scalars[1] = lhs.m12 * rhs.m11 + lhs.m22 * rhs.m12
+        scalars[1] += lhs.m32 * rhs.m13 + lhs.m42 * rhs.m14
         
-        m.m14 = lhs.m14 * rhs.m11 + lhs.m24 * rhs.m12
-        m.m14 += lhs.m34 * rhs.m13 + lhs.m44 * rhs.m14
+        scalars[2] = lhs.m13 * rhs.m11 + lhs.m23 * rhs.m12
+        scalars[2] += lhs.m33 * rhs.m13 + lhs.m43 * rhs.m14
         
-        m.m21 = lhs.m11 * rhs.m21 + lhs.m21 * rhs.m22
-        m.m21 += lhs.m31 * rhs.m23 + lhs.m41 * rhs.m24
+        scalars[3] = lhs.m14 * rhs.m11 + lhs.m24 * rhs.m12
+        scalars[3] += lhs.m34 * rhs.m13 + lhs.m44 * rhs.m14
         
-        m.m22 = lhs.m12 * rhs.m21 + lhs.m22 * rhs.m22
-        m.m22 += lhs.m32 * rhs.m23 + lhs.m42 * rhs.m24
+        scalars[4] = lhs.m11 * rhs.m21 + lhs.m21 * rhs.m22
+        scalars[4] += lhs.m31 * rhs.m23 + lhs.m41 * rhs.m24
         
-        m.m23 = lhs.m13 * rhs.m21 + lhs.m23 * rhs.m22
-        m.m23 += lhs.m33 * rhs.m23 + lhs.m43 * rhs.m24
+        scalars[5] = lhs.m12 * rhs.m21 + lhs.m22 * rhs.m22
+        scalars[5] += lhs.m32 * rhs.m23 + lhs.m42 * rhs.m24
         
-        m.m24 = lhs.m14 * rhs.m21 + lhs.m24 * rhs.m22
-        m.m24 += lhs.m34 * rhs.m23 + lhs.m44 * rhs.m24
+        scalars[6] = lhs.m13 * rhs.m21 + lhs.m23 * rhs.m22
+        scalars[6] += lhs.m33 * rhs.m23 + lhs.m43 * rhs.m24
         
-        m.m31 = lhs.m11 * rhs.m31 + lhs.m21 * rhs.m32
-        m.m31 += lhs.m31 * rhs.m33 + lhs.m41 * rhs.m34
+        scalars[7] = lhs.m14 * rhs.m21 + lhs.m24 * rhs.m22
+        scalars[7] += lhs.m34 * rhs.m23 + lhs.m44 * rhs.m24
         
-        m.m32 = lhs.m12 * rhs.m31 + lhs.m22 * rhs.m32
-        m.m32 += lhs.m32 * rhs.m33 + lhs.m42 * rhs.m34
+        scalars[8] = lhs.m11 * rhs.m31 + lhs.m21 * rhs.m32
+        scalars[8] += lhs.m31 * rhs.m33 + lhs.m41 * rhs.m34
         
-        m.m33 = lhs.m13 * rhs.m31 + lhs.m23 * rhs.m32
-        m.m33 += lhs.m33 * rhs.m33 + lhs.m43 * rhs.m34
+        scalars[9] = lhs.m12 * rhs.m31 + lhs.m22 * rhs.m32
+        scalars[9] += lhs.m32 * rhs.m33 + lhs.m42 * rhs.m34
         
-        m.m34 = lhs.m14 * rhs.m31 + lhs.m24 * rhs.m32
-        m.m34 += lhs.m34 * rhs.m33 + lhs.m44 * rhs.m34
+        scalars[10] = lhs.m13 * rhs.m31 + lhs.m23 * rhs.m32
+        scalars[10] += lhs.m33 * rhs.m33 + lhs.m43 * rhs.m34
         
-        m.m41 = lhs.m11 * rhs.m41 + lhs.m21 * rhs.m42
-        m.m41 += lhs.m31 * rhs.m43 + lhs.m41 * rhs.m44
+        scalars[11] = lhs.m14 * rhs.m31 + lhs.m24 * rhs.m32
+        scalars[11] += lhs.m34 * rhs.m33 + lhs.m44 * rhs.m34
         
-        m.m42 = lhs.m12 * rhs.m41 + lhs.m22 * rhs.m42
-        m.m42 += lhs.m32 * rhs.m43 + lhs.m42 * rhs.m44
+        scalars[12] = lhs.m11 * rhs.m41 + lhs.m21 * rhs.m42
+        scalars[12] += lhs.m31 * rhs.m43 + lhs.m41 * rhs.m44
         
-        m.m43 = lhs.m13 * rhs.m41 + lhs.m23 * rhs.m42
-        m.m43 += lhs.m33 * rhs.m43 + lhs.m43 * rhs.m44
+        scalars[13] = lhs.m12 * rhs.m41 + lhs.m22 * rhs.m42
+        scalars[13] += lhs.m32 * rhs.m43 + lhs.m42 * rhs.m44
         
-        m.m44 = lhs.m14 * rhs.m41 + lhs.m24 * rhs.m42
-        m.m44 += lhs.m34 * rhs.m43 + lhs.m44 * rhs.m44
+        scalars[14] = lhs.m13 * rhs.m41 + lhs.m23 * rhs.m42
+        scalars[14] += lhs.m33 * rhs.m43 + lhs.m43 * rhs.m44
         
-        return m
+        scalars[15] = lhs.m14 * rhs.m41 + lhs.m24 * rhs.m42
+        scalars[15] += lhs.m34 * rhs.m43 + lhs.m44 * rhs.m44
+        
+        return Matrix4(scalars)
     }
     
     public static func *(lhs: Matrix4, rhs: Vector3) -> Vector3 {
@@ -1108,11 +1081,6 @@ public extension Quaternion {
     public var xyz: Vector3 {
         get {
             return Vector3(x, y, z)
-        }
-        set(v) {
-            x = v.x
-            y = v.y
-            z = v.z
         }
     }
 
